@@ -1,0 +1,229 @@
+// CODE FOR GARAGE SENSORS - INFRARED SENSOR, DHT11, LEDS, BUTTONS, LCD I2C
+// spare copy of code on notpad - to upload to github
+
+// LIBRARIES
+#include <DHT11.h>
+#include <LiquidCrystal_I2C.h> // specific library for I2C LCD screens
+
+// SOFTWARE FLAGS
+bool too_cold_garage = false;
+bool too_hot = false;
+bool too_humid = false;
+bool too_dry = false;
+bool button_infrared_pressed = false;
+bool button_dht_temp_pressed = false;
+bool button_dht_humidity_pressed = false;
+
+// PINS
+#define DHT11_PIN 7
+int IRSensor = 9;
+// button pins
+int infrared_button = 3;
+int dht_garage_temp_button = 11;
+int dht_garage_humidity_button = 12; //---------------!
+// led pins
+int infrared_led = 2;
+int dht_garage_temp_led = 8;
+int dht_garage_humidity_led = 10; //------------!
+
+// OBJECTS
+DHT11 DHT(DHT11_PIN); // instantiating dht
+LiquidCrystal_I2C lcd(0x27, 16, 2); // the LCD is 16 units wide, 2 units down 
+
+void setup() {
+  Serial.begin(9600);
+  lcd.init(); // initialising LCD screen
+  lcd.backlight(); // turning on the backlight
+  pinMode(IRSensor, INPUT); // input as arduino recieves reflected beam
+  pinMode(infrared_led, INPUT);
+  pinMode(dht_garage_temp_led, INPUT);
+  pinMode(dht_garage_humidity_led, INPUT); //-------------!
+  DHT.setDelay(500);
+  pinMode(infrared_button, INPUT);
+  pinMode(dht_garage_temp_button, INPUT);
+  pinMode(dht_garage_humidity_button, INPUT); //----------!
+}
+
+void loop() {
+  lcd.clear();
+  int infrared_button_value = digitalRead(infrared_button);
+  int dht_garage_button_temp_value = digitalRead(dht_garage_temp_button);
+  int dht_garage_button_humidity_value = digitalRead(dht_garage_humidity_button); //------------!
+
+  // getting variables
+  int temperature = 0;
+  int humidity = 0;
+  int dht_result = DHT.readTemperatureHumidity(temperature, humidity);
+  int irSensorStatus = digitalRead(IRSensor);
+  Serial.print(irSensorStatus);
+
+  if (button_infrared_pressed == false && button_dht_temp_pressed == false && button_dht_humidity_pressed == false){ //------!
+    if (dht_result == 0) {
+        // temperature
+        Serial.print("Temperature: ");
+        Serial.print(temperature);
+        lcd.setCursor(0, 0);
+        lcd.print("Temperature :");
+        lcd.setCursor(0, 1);
+        lcd.print(temperature);
+        lcd.setCursor(2, 1);
+        lcd.print("C");
+        delay(1500);
+
+        lcd.clear();
+
+        // humidity
+        Serial.print(" °C\tHumidity: ");
+        Serial.print(humidity);
+        Serial.println(" %");
+        lcd.setCursor(0, 0);
+        lcd.print("Humidity :");
+        lcd.setCursor(0, 1);
+        lcd.print(humidity);
+        lcd.setCursor(2, 1);
+        lcd.print("%");
+        delay(1500);
+
+        lcd.clear();
+
+      } else {
+          // Print error message based on the error code.
+          Serial.println(DHT11::getErrorString(dht_result));
+      }
+
+    delay(1000);
+
+    // infrared read here for reliabiity
+    irSensorStatus = digitalRead(IRSensor);
+
+    if(irSensorStatus == 1){ // ofrst status read for LEDs to turn in before warning turns up
+      digitalWrite(infrared_led, HIGH);
+    } else if (irSensorStatus == 0){
+      digitalWrite(infrared_led, LOW);
+    }
+
+    if (irSensorStatus == 1) { // 1 is essentially a HIGH reading 
+      Serial.println("not detected"); // print not detected on the serial monitor window 
+      lcd.setCursor(0, 0);
+      lcd.print("Nothing detected");
+    }
+    else {
+      Serial.println("detected"); // print detected on the serial monitor window
+      lcd.setCursor(0, 0);
+      lcd.print("Detected");
+    }
+
+    delay(1000);
+
+    if(temperature < 12){
+      // turn LED on - too cold
+      digitalWrite(dht_garage_temp_led, HIGH);
+      too_cold_garage = true;
+    } else if(temperature > 21){
+      digitalWrite(dht_garage_temp_led, HIGH);
+      too_hot = true;
+    } else {
+      digitalWrite(dht_garage_temp_led, LOW);
+    }
+    if(irSensorStatus == 1){
+      digitalWrite(infrared_led, HIGH);
+    } else if (irSensorStatus == 0){
+      digitalWrite(infrared_led, LOW);
+    }
+    if(humidity < 20){ //-------------!
+      digitalWrite(dht_garage_humidity_led, HIGH);
+      too_dry = true;
+    } else if(humidity > 40){ //---------!
+      digitalWrite(dht_garage_humidity_led, HIGH);
+      too_humid = true;
+    } else{
+      digitalWrite(dht_garage_humidity_led, LOW);
+    } //--------------!
+
+    infrared_button_value = digitalRead(infrared_button);
+    dht_garage_button_temp_value = digitalRead(dht_garage_temp_button);
+    dht_garage_button_humidity_value = digitalRead(dht_garage_humidity_button); //------------!
+
+    Serial.print("IR Button value : ");
+    Serial.println(infrared_button_value);
+    Serial.print("DHT garage temp button value : ");
+    Serial.println(dht_garage_button_temp_value);
+    Serial.print("DHT garage humidity button value : "); //---------!
+    Serial.println(dht_garage_button_humidity_value); //----------!
+
+    delay(1000); // delay
+
+  } // end of byttons not pressed loop
+
+  if (infrared_button_value == 1){
+    button_infrared_pressed = true;
+  }
+  if (dht_garage_button_temp_value == 1){
+    button_dht_temp_pressed = true;
+  }
+  if (dht_garage_button_humidity_value == 1){ // ---------!
+    button_dht_humidity_pressed = true; //----------!
+    button_dht_temp_pressed = false; // for debugging and reliability 
+  }
+
+  if (button_infrared_pressed == true || button_dht_temp_pressed == true || button_dht_humidity_pressed == true){ //------!
+    lcd.clear();
+
+    if (infrared_button_value == 1){
+      Serial.println("Button ir pressed");
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Garage door");
+      lcd.setCursor(0, 1);
+      lcd.print("open!");
+    }
+
+    if (dht_garage_button_temp_value == 1){
+      Serial.println("Button dht temp pressed");
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      if(too_cold_garage == true){
+        lcd.print("Cold in garage");
+        lcd.setCursor(0, 1);
+        lcd.print("Wear a jacket!");
+      } else if (too_hot == true){
+        lcd.print("Hot in garage");
+      }
+    }
+
+    if(dht_garage_button_humidity_value == 1){ //---------!
+      Serial.print("Button DHT humidity pressed---------------!");
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      if(too_dry == true){
+        lcd.print("Dry in garage");
+      } else if(too_humid == true){
+        lcd.print("Humid in garage");
+      }
+      //end of ifs
+    }
+
+  delay(3000);
+
+  } // end of loop for button pressed code 
+
+  infrared_button_value = digitalRead(infrared_button);
+  dht_garage_button_temp_value = digitalRead(dht_garage_temp_button);
+  dht_garage_button_humidity_value = digitalRead(dht_garage_humidity_button);
+
+  Serial.println(button_infrared_pressed);
+  Serial.println(button_dht_temp_pressed);
+   
+  if (infrared_button_value == 0){
+    button_infrared_pressed = false;
+  }
+
+  if(dht_garage_button_temp_value == 0){
+    button_dht_temp_pressed = false;
+  }
+
+  if(dht_garage_button_humidity_value == 0){
+    button_dht_humidity_pressed = false;
+  }
+
+}
