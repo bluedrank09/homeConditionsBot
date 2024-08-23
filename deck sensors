@@ -1,0 +1,156 @@
+#include <LiquidCrystal_I2C.h> // specific library for I2C LCD screens
+
+LiquidCrystal_I2C lcd(0x27, 16, 2); // the LCD is 16 units wide, 2 units down
+
+// PINS
+int rain_button = 5; 
+int soil_button = 7;
+int rain_led = 9;
+int soil_led = 11;
+
+// BOOLEANS
+bool soil_button_pressed = false;
+bool rain_button_pressed = false;
+bool soil_too_soaked = false;
+bool soil_too_dry = false;
+
+void setup() {
+  Serial.begin(9600); // setting up serial monitor
+  lcd.init(); // initialising LCD screen
+  lcd.backlight(); // turning on the backlight
+  // pinModes for all components connected to Arduino via pins
+  pinMode(rain_led, INPUT);
+  pinMode(soil_led, INPUT);
+  pinMode(rain_button, INPUT);
+  pinMode(soil_button, INPUT);
+}
+
+void loop() {
+  lcd.clear(); // clearing LCD
+  int rain_button_value = digitalRead(rain_button); // reading if the rain button has been pressed
+  int soil_button_value = digitalRead(soil_button); // reading if the soil button has been pressed
+  Serial.println(rain_button_value); // printing out if button has been pressed or not
+  Serial.println(soil_button_value);
+
+  lcd.clear(); // clearing LCD
+  // soil moisture sensor
+  int soil_sensor_value = analogRead(0); // reading soil moisture from soil sensor
+  int rain_sensor_value = analogRead(A1); // reading rain level from rain sensor
+
+  if (soil_button_pressed == false && rain_button_pressed == false){ // if both buttons aren't pressed
+    Serial.print("Soil moisture :"); // printing values in serial monitor
+    Serial.println(soil_sensor_value);
+    lcd.setCursor(0,0); // setting the cursor
+    lcd.print("Soil moisture :"); // displaying the text
+    lcd.setCursor(0, 1); // setting cursor to second row
+    lcd.print(soil_sensor_value); // pritning value 
+    delay(1000); // keeping text up for a second
+    lcd.clear(); 
+    delay(1000); // waiting a second before displaying the rain text again
+
+    if (soil_sensor_value < 300 ){ // if the soil is too moist
+      digitalWrite(soil_led, HIGH); // turn on soil LED 
+      soil_too_dry = true; // setting boolean so the correct text displays when button is pressed
+    } else if (soil_sensor_value > 700 ){ // if soil is too dry
+      digitalWrite(soil_led, HIGH); // turn on soil LED 
+      soil_too_soaked = true; // setting boolean so correct text displays when button is pressed
+    } else {
+      soil_too_soaked = false; // setting booleans to false as nothing is wrong with the soil
+      soil_too_dry = false;
+      digitalWrite(soil_led, LOW); // turn off LED 
+    }
+
+    // rain sensor
+    int rain_sensor_value = analogRead(A1); // reading rain value from the sensor 
+
+    Serial.print("Rain level value : ");
+    Serial.println(rain_sensor_value);
+    lcd.setCursor(0, 0);
+    lcd.print("Rain level :");
+    lcd.setCursor(0, 1);
+    lcd.print(rain_sensor_value);
+    delay(1000);
+    lcd.clear();
+    delay(1000);
+
+    // dealing with LED
+    if (rain_sensor_value < 250){
+      digitalWrite(rain_led, HIGH);
+    } else {
+      digitalWrite(rain_led, LOW);
+    }
+
+    rain_button_value = digitalRead(rain_button);
+    soil_button_value = digitalRead(soil_button);
+
+    delay(1000);
+    Serial.println(rain_button_value);
+    Serial.println(soil_button_value);
+
+  } // END OF BUTTONS 
+
+  rain_button_value = digitalRead(rain_button);
+  soil_button_value = digitalRead(soil_button);
+  Serial.print("rain button value : ");
+  Serial.println(rain_button_value);
+  Serial.print("soil button value : ");
+  Serial.println(soil_button_value);
+
+  if (rain_button_value == 1){
+    rain_button_pressed = true;
+    Serial.print("Button rain pressed true");
+  }
+  if (soil_button_value == 1){
+    soil_button_pressed = true;
+    Serial.print("button soil pressed true");
+  }
+
+  if (rain_button_pressed == true || soil_button_pressed == true){
+    lcd.clear();
+
+    if (rain_button_value == 1){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Heavy rain");
+    }
+
+    if (soil_button_value == 1){
+      if (soil_too_soaked == true){
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Soil waterlogged");
+        delay(1500);
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Move plants");
+        lcd.setCursor(0, 1);
+        lcd.print("inside");
+      }
+      if (soil_too_dry == true){
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Soil too dry");
+        lcd.setCursor(0, 1);
+        lcd.print("Water plants!");
+      }
+    }
+
+    delay(3000);
+
+  } // end of buttons pressed loop
+
+  rain_button_value = digitalRead(rain_button);
+  soil_button_value = digitalRead(soil_button);
+
+  Serial.println(soil_button_pressed);
+  Serial.println(rain_button_pressed);
+   
+  if (rain_button_value == 0){
+    rain_button_pressed = false;
+  }
+
+  if(soil_button_value == 0){
+    soil_button_pressed = false;
+  }
+  
+} // end of lvoid loop
