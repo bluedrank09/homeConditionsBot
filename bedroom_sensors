@@ -7,12 +7,14 @@
 // PINS
 #define DHT11_PIN 9 // pin
 #define LRD_PIN 7  // Arduino's pin connected to DO pin of the ldr module
+// button pins
 int dht_bedroom_temp_button = 5; 
 int photoresistor_button = 2; 
-int dht_bedroom_humidity_button = 8; //--------!
+int dht_bedroom_humidity_button = 8; 
+// led pins
 int photoresistor_led = 10; 
 int dht_bedroom_temp_led = 11;
-int dht_bedroom_humidity_led = 3; // -----------!
+int dht_bedroom_humidity_led = 3; 
 
 // OBJECTS
 DHT11 DHT(DHT11_PIN); // object for DHT11
@@ -21,11 +23,11 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); // the LCD is 16 units wide, 2 units down
 // BOOLEANS
 bool too_cold_bedroom = false; // turns true if the temperature means the room is too hot
 bool too_hot_bedroom = false; // turns true if the tempreature means the room is too cold
+bool too_humid_bedroom = false; // switches to true if humidity is above certain threshold
+bool too_dry_bedroom = false; // switches to true if humidity is below certain threshold
 bool photoresistor_button_pressed = false; // switches to true if the photoresistor button is pressed 
 bool dht_bedroom_temp_button_pressed = false; // switches to true if the dht garage button is pressed 
-bool too_humid_bedroom = false; //------!
-bool too_dry_bedroom = false; //---------!
-bool button_dht_humidity_pressed = false; //------!
+bool button_dht_humidity_pressed = false; // switches to true if the dht humidity button is pressed 
 
 void setup(){
   Serial.begin(9600); // starting serial monitor
@@ -33,193 +35,206 @@ void setup(){
   lcd.init(); // initialising LCD screen
   lcd.backlight(); // turning on the backlight
   // setting pinModes - INPUT means the sensor is giving information to the Arduino 
-  pinMode(LRD_PIN, INPUT);
-  pinMode(dht_bedroom_temp_button, INPUT);
-  pinMode(photoresistor_button, INPUT);
-  pinMode(dht_bedroom_humidity_button, INPUT); //-------!
-  pinMode(photoresistor_led, INPUT);
-  pinMode(dht_bedroom_temp_led, INPUT);
-  pinMode(dht_bedroom_humidity_led, INPUT); //---!
+  pinMode(LRD_PIN, INPUT); // setting LRD pin as input
+  pinMode(dht_bedroom_temp_button, INPUT); // setting dht bedroom temperature button to input
+  pinMode(photoresistor_button, INPUT); // setting photoresistor button to input 
+  pinMode(dht_bedroom_humidity_button, INPUT); // setting dht bedroom humidity button to input
+  pinMode(photoresistor_led, INPUT); // setting photoresistor LED to input
+  pinMode(dht_bedroom_temp_led, INPUT); // setting dht bedroom temperature led to input
+  pinMode(dht_bedroom_humidity_led, INPUT); // setting dht bedroom humidity led to input
 }
 
 void loop(){
   lcd.clear(); // clearing LCD screen when the program first loads 
   int photoresistor_button_value = digitalRead(photoresistor_button);  // reading if photoresistor button is pressed
-  int dht_bedroom_temp_button_value = digitalRead(dht_bedroom_temp_button);  // reading if dht button is pressed
-  int dht_bedroom_humidity_button_value = digitalRead(dht_bedroom_humidity_button); //---------!
+  int dht_bedroom_temp_button_value = digitalRead(dht_bedroom_temp_button);  // reading if dht temperature button is pressed
+  int dht_bedroom_humidity_button_value = digitalRead(dht_bedroom_humidity_button); // reading if dht humidity is pressed
 
   int temperature = 0; // variable to store temperature
   int humidity = 0; // variable to store humidity
   int result = DHT.readTemperatureHumidity(temperature, humidity); // reading values
 
-  if (photoresistor_button_pressed == false && dht_bedroom_temp_button_pressed == false && button_dht_humidity_pressed == false){ // executes if BOTH buttons aren't pressed ---!
-    int lightState = digitalRead(LRD_PIN);
-    Serial.println(lightState);
+  // executes if ALL buttons aren't pressed
+  if (photoresistor_button_pressed == false && dht_bedroom_temp_button_pressed == false && button_dht_humidity_pressed == false){ 
+    int lightState = digitalRead(LRD_PIN); // reads if light is on or off
+    Serial.println(lightState); // printing in serial monitor
 
-    if (lightState == HIGH){
-      Serial.println("The light is NOT present");
-      lcd.setCursor(0,0);
-      lcd.print("Light is :");
-      lcd.setCursor(0, 1);
-      lcd.print("Off");
-    } else {
-      Serial.println("The light is present");
-      lcd.setCursor(0,0);
-      lcd.print("Light is :");
-      lcd.setCursor(0, 1);
-      lcd.print("On");
-      delay(1000);
-      lcd.clear();
+    if (lightState == HIGH){ // if there is no light
+      Serial.println("The light is NOT present"); // printing in serial monitor
+      lcd.setCursor(0,0); // setting cursor
+      lcd.print("Light is :"); // displaying on LCD screen
+      lcd.setCursor(0, 1); // setting cursor
+      lcd.print("Off"); // displaying on LCD screen
+    } else { // if light is present
+      Serial.println("The light is present"); // priting in serial monitor
+      lcd.setCursor(0,0); // setting cursor
+      lcd.print("Light is :"); // displaying on LCD screen 
+      lcd.setCursor(0, 1); // setting cursor
+      lcd.print("On"); // displaying on LCD screen
+      delay(1000); // keeping text on screen for a second
+      lcd.clear(); // clearing LCD screen
     }
 
-    if(lightState == LOW){
-      // turning on LED as light is left on
-      Serial.print("Photoresistor LED on");
-      digitalWrite(photoresistor_led, HIGH);
+    if(lightState == LOW){ // if there is light present
+      Serial.print("Photoresistor LED on"); // printing in serial monitor
+      digitalWrite(photoresistor_led, HIGH); // turning on photoresistor LED
     } else {
       // turning led off
-      Serial.print("Photoresistor LED off");
-      digitalWrite(photoresistor_led, LOW);
+      Serial.print("Photoresistor LED off"); // printing in serial monitor
+      digitalWrite(photoresistor_led, LOW); // turning off photoresistor LED
     }
 
-    delay(1500);  
+    delay(1500); // delay
 
-    photoresistor_button_value = digitalRead(photoresistor_button); 
-    dht_bedroom_temp_button_value = digitalRead(dht_bedroom_temp_button); 
-    dht_bedroom_humidity_button_value = digitalRead(dht_bedroom_humidity_button); //---------!
+    photoresistor_button_value = digitalRead(photoresistor_button); // reading if photoresistor button is pressed
+    dht_bedroom_temp_button_value = digitalRead(dht_bedroom_temp_button); // reading if dht temperature buttoni s pressed
+    dht_bedroom_humidity_button_value = digitalRead(dht_bedroom_humidity_button); // reading if dht humidity button is pressed
 
-    if (result == 0) {
-      Serial.print("Temperature: "); // serial printing temperature for debugging
-      Serial.print(temperature);
-      Serial.print(" °C\tHumidity: ");
-      Serial.print(humidity);
-      Serial.println(" %");
+    if (result == 0) { // if the DHT worked and read the values
+      Serial.print("Temperature: "); // printing in serial monitor
+      Serial.print(temperature); // printing in serial monitor
+      Serial.print(" °C\tHumidity: "); // printing in serial monitor
+      Serial.print(humidity); // printing in serial monitor
+      Serial.println(" %"); // printing in serial monitor
 
-      // printing out the temperature and humidity on the LCD screen
+      // displaying the temperature and humidity on the LCD screen
       lcd.setCursor(0, 0); // setting cursor
-      lcd.print("Temperature :"); // printing name
+      lcd.print("Temperature :"); // displaying name
       lcd.setCursor(0, 1); // setting cursor 
-      lcd.print(temperature); // printing temperature 
-      lcd.setCursor(2, 1);
-      lcd.print("C"); // degrees symbol doesn't work on an LCD screen - check!!!
-      delay(1500); // leaving text on for 1.5 seconds
+      lcd.print(temperature); // displaying temperature 
+      lcd.setCursor(2, 1); // setting cursor
+      lcd.print("C"); // degrees symbol doesn't work on an LCD screen
+      delay(1500); // delay - leaving text on for 1.5 seconds
 
       lcd.clear(); // clearing LCD screen
 
-      // printig out humidity level on LCD screen
-      lcd.setCursor(0, 0);
-      lcd.print("Humidity :");
-      lcd.setCursor(0, 1);
-      lcd.print(humidity);
-      lcd.setCursor(2, 1);
-      lcd.print("%");
-      delay(1500);
+      // displaying humidity level on LCD screen
+      lcd.setCursor(0, 0); // setting cursor
+      lcd.print("Humidity :"); // displaying on LCD screen
+      lcd.setCursor(0, 1); // setting cursor
+      lcd.print(humidity); // displaying on LCD screen
+      lcd.setCursor(2, 1); // setting cursor
+      lcd.print("%"); // displaying on LCD screen
+      delay(1500); // displaying text for 1.5 seconds
 
-      lcd.clear();
+      lcd.clear(); // clearing LCD screen
 
-    } else {
-        // Print error message based on the error code.
-        Serial.println(DHT11::getErrorString(result));
+    } else { // if the DHT failed to read
+        Serial.println(DHT11::getErrorString(result)); // print error message based on the error code in serial monitor
     }
 
-    if(temperature < 12){
-      // turn LED on - too cold
-      digitalWrite(dht_bedroom_temp_led, HIGH);
-      too_cold_bedroom = true;
-    } else if(temperature > 21){
-      digitalWrite(dht_bedroom_temp_led, HIGH);
-      too_hot_bedroom = true;
-    } else {
-      digitalWrite(dht_bedroom_temp_led, LOW);
+    if(temperature < 12){ // if temperature is too cold
+      digitalWrite(dht_bedroom_temp_led, HIGH); // turning on temperature LED
+      too_cold_bedroom = true; // too_cold_bedroom becomes true to alter displayed text
+    } else if(temperature > 24){ // if temperature is too hot
+      digitalWrite(dht_bedroom_temp_led, HIGH); // turning on temperature LED
+      too_hot_bedroom = true; // too_hot_bedroom becomes true to alter displayed text
+    } else { // if temperature is between 12 and 24
+      digitalWrite(dht_bedroom_temp_led, LOW); // turning off LED
     } 
 
-    if(humidity < 20){ //--------!
-      digitalWrite(dht_bedroom_humidity_led, HIGH);
-      too_dry_bedroom = true;
-    } else if(humidity > 40){
-      Serial.print("reached here");
-      digitalWrite(dht_bedroom_humidity_led, HIGH);
-      too_humid_bedroom = true;
-    } else{
-      digitalWrite(dht_bedroom_humidity_led, LOW);
-    } //-------!
+    if(humidity < 20){ // if humidity is too dry
+      digitalWrite(dht_bedroom_humidity_led, HIGH); // turning on humidity LED
+      too_dry_bedroom = true; // too_dry_bedroom turns true to alter displayed text
+    } else if(humidity > 40){ // if humidity is too humid
+      digitalWrite(dht_bedroom_humidity_led, HIGH); // turning on humidity LED
+      too_humid_bedroom = true; // too_humid_bedroom turns true to alter displayed text
+    } else{ // if humidity is between 20 and 40
+      digitalWrite(dht_bedroom_humidity_led, LOW); // turning off humidity LED
+    } 
 
-    delay(1000);
+    delay(1000); // delay
     
-    photoresistor_button_value = digitalRead(photoresistor_button); 
-    dht_bedroom_temp_button_value = digitalRead(dht_bedroom_temp_button); 
-    dht_bedroom_humidity_button_value = digitalRead(dht_bedroom_humidity_button); //---------!
+    photoresistor_button_value = digitalRead(photoresistor_button); // reading if photoresistor button is pressed
+    dht_bedroom_temp_button_value = digitalRead(dht_bedroom_temp_button); // reading if dht bedroom temperature button is pressed
+    dht_bedroom_humidity_button_value = digitalRead(dht_bedroom_humidity_button); // reading if dht bedroom humidity button is pressed
 
   } // END OF NO BUTTONS PRESSED LOOP
 
-  if (photoresistor_button_value == 1){
-    photoresistor_button_pressed = true;
+  if (photoresistor_button_value == 1){ // if photoresistor button is pressed
+    photoresistor_button_pressed = true; // setting boolean to true
   }
-  if (dht_bedroom_temp_button_value == 1){
-    dht_bedroom_temp_button_pressed = true;
+  if (dht_bedroom_temp_button_value == 1){ // if dht bedroom temperature button is pressed
+    dht_bedroom_temp_button_pressed = true; // setting boolean to true
   }
-  if(dht_bedroom_humidity_button_value == 1){ //-------!
-    button_dht_humidity_pressed = true;
+  if(dht_bedroom_humidity_button_value == 1){ // if  dht bedroom humidity button is pressed
+    button_dht_humidity_pressed = true; // setting boolean to true
   }
 
-  if (photoresistor_button_pressed == true || dht_bedroom_temp_button_pressed == true || button_dht_humidity_pressed == true){
-    lcd.clear();
+  // executes if a button is pressed
+  if (photoresistor_button_pressed == true || dht_bedroom_temp_button_pressed == true || button_dht_humidity_pressed == true){ 
+    lcd.clear(); // clearing LCD
 
-    if(photoresistor_button_value == 1){
-      //Serial.print("photobuttonpressed!!!");
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print("Light left on!");
-      delay(500);
+    if(photoresistor_button_value == 1){ // if photoresistor button is pressed
+      if(lightState == LOW) // if light is detected
+        lcd.clear(); // clearing LCD
+        lcd.setCursor(0, 0); // setting cursor
+        lcd.print("Light left on!"); // displaying
+        delay(500); // delay 
+    } else if(lightState == HIGH){ // if no light is detected, but the button is still pressed
+        lcd.setCursor(0, 0); // setting cursor
+        lcd.print("Nothing of"); // priting text on LCD screen 
+        lcd.setCursor(0, 1); // setting cursor
+        lcd.print("value/concern!"); // displaying text on LCD screen
     }
 
-    if(dht_bedroom_temp_button_value == 1){
-      Serial.println("Button dht pressed");
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      if(too_cold_bedroom == true){
-        lcd.print("Cold in bedroom");
-        lcd.setCursor(0, 1);
-        lcd.print("Jacket/heater?");
-      } else if(too_hot_bedroom == true){
-          lcd.print("Hot in bedroom");
-          lcd.setCursor(0, 1);
-          lcd.print("Heater left on?");
+    if(dht_bedroom_temp_button_value == 1){ // if dht bedroom temperature button is pressed
+      lcd.clear(); // clearing LCD
+      lcd.setCursor(0, 0); // setting cursor
+      if(too_cold_bedroom == true){ // if too_cold_bedroom is true 
+        lcd.print("Cold in bedroom"); // displaying on LCD screen
+        lcd.setCursor(0, 1); // setting cursor
+        lcd.print("Jacket/heater?"); // displaying on LCD screen
+      } else if(too_hot_bedroom == true){ // if too_hot_bedroom is true
+          lcd.print("Hot in bedroom"); // displaying on LCD screen
+          lcd.setCursor(0, 1); // setting cursor
+          lcd.print("Heater left on?"); // displaying on LCD screen
+      } else if(too_cold_bedroom == false && too_hot_bedroom == false){ // if there is no reading of concern but the button is pressed
+        lcd.setCursor(0, 0); // setting cursor
+        lcd.print("Nothing of"); // priting text on LCD screen 
+        lcd.setCursor(0, 1); // setting cursor
+        lcd.print("value/concern!"); // displaying text on LCD screen
       }
     } 
 
-    if(dht_bedroom_humidity_button_value == 1){
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      if(too_humid_bedroom == true){
-        lcd.print("Humid in room");
-        lcd.setCursor(0, 1);
-        lcd.print("Dehumidifier?");
-      } else if(too_dry_bedroom == true){
-          lcd.print("Too dry in room");
+    if(dht_bedroom_humidity_button_value == 1){ // if dht humidity button is pressed 
+      lcd.clear(); // clearing LCD
+      lcd.setCursor(0, 0); // setting cursor
+      if(too_humid_bedroom == true){ // if too_humid_bedroom is true
+        lcd.print("Humid in room"); // displaying text on LCD screen
+        lcd.setCursor(0, 1); // setting cursor
+        lcd.print("Dehumidifier?"); // displaying on LCD screen
+      } else if(too_dry_bedroom == true){ // if too_dry_bedroom is true
+          lcd.print("Very dry in room"); // displaying on LCD screen
+      } else if(too_humid_bedroom == false && too_dry_bedroom == false){ // if there is no reading of concern but the button is pressed
+          lcd.setCursor(0, 0); // setting cursor
+          lcd.print("Nothing of"); // priting text on LCD screen 
+          lcd.setCursor(0, 1); // setting cursor
+          lcd.print("value/concern!"); // displaying text on LCD screen
       }
     }
-    delay(3000); 
+
+    delay(3000); // delay
   } // end of buttons pressed loop
   
   // checking if buttons pressed again
-  photoresistor_button_value = digitalRead(photoresistor_button); 
-  dht_bedroom_temp_button_value = digitalRead(dht_bedroom_temp_button); 
-  dht_bedroom_humidity_button_value = digitalRead(dht_bedroom_humidity_button);
-  Serial.print(photoresistor_button_value);
-  Serial.print(dht_bedroom_temp_button_value);
-  Serial.print(dht_bedroom_humidity_button_value);
+  photoresistor_button_value = digitalRead(photoresistor_button);  // reading if the photoresistor button is pressed
+  dht_bedroom_temp_button_value = digitalRead(dht_bedroom_temp_button); // reading if the dht bedroom button is pressed
+  dht_bedroom_humidity_button_value = digitalRead(dht_bedroom_humidity_button); // reading if the dht bedroom humidity button is pressed
+  Serial.print(photoresistor_button_value); // printing in serial monitor
+  Serial.print(dht_bedroom_temp_button_value); // printing in serial monitor
+  Serial.print(dht_bedroom_humidity_button_value); // printing in serial monitor
 
-  if (photoresistor_button_value == 0){
-    photoresistor_button_pressed = false;
+  if (photoresistor_button_value == 0){ // if photoresistor button isn't pressed
+    photoresistor_button_pressed = false; // setting boolean to false to first loop executes
   }
   
-  if(dht_bedroom_temp_button_value == 0){
-    dht_bedroom_temp_button_pressed = false;
+  if(dht_bedroom_temp_button_value == 0){ // if dht bedroom temperature button isn't pressed
+    dht_bedroom_temp_button_pressed = false; // setting boolean to false to first loop executes
   }
 
-  if(dht_bedroom_humidity_button_value == 0){
-    button_dht_humidity_pressed = false;
+  if(dht_bedroom_humidity_button_value == 0){ // if dht bedroom humidity button isn't pressed
+    button_dht_humidity_pressed = false; // setting boolean to false to first loop executes
   }
  
 }  // end of void loop
