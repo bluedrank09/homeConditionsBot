@@ -1,20 +1,20 @@
 // CODE FOR BEDROOM SENSORS - DHT11, PHOTORESISTORS, BUTTONS, LEDS I2C SCREEN
 
 // LIBRARIES
-#include <DHT11.h>
-#include <LiquidCrystal_I2C.h> // specific library for I2C LCD screens
+#include <DHT11.h> // library for DHT11 temperature humidity sensors
+#include <LiquidCrystal_I2C.h> //  library for I2C LCD screens
 
 // PINS
-#define DHT11_PIN 9 // pin
-#define LRD_PIN 7  // Arduino's pin connected to DO pin of the ldr module
+#define DHT11_PIN 9 // digital pin 9
+#define LRD_PIN 7  // digital pin 7
 // button pins
-int dht_bedroom_temp_button = 5; 
-int photoresistor_button = 2; 
-int dht_bedroom_humidity_button = 8; 
+int dht_bedroom_temp_button = 5; // digital pin 5
+int photoresistor_button = 2; // digital pin 2
+int dht_bedroom_humidity_button = 8; // digital pin 8
 // led pins
-int photoresistor_led = 10; 
-int dht_bedroom_temp_led = 11;
-int dht_bedroom_humidity_led = 3; 
+int photoresistor_led = 10; // digital pin 10
+int dht_bedroom_temp_led = 11; // digital pin 11
+int dht_bedroom_humidity_led = 3; // digital pin 3
 
 // OBJECTS
 DHT11 DHT(DHT11_PIN); // object for DHT11
