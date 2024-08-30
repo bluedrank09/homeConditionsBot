@@ -1,4 +1,4 @@
-// CODE FOR BEDROOM SENSORS - DHT11, PHOTORESISTORS, BUTTONS, LEDS I2C SCREEN
+// CODE FOR BEDROOM SENSORS - DHT11, PHOTORESISTOR, BUTTONS, LEDS, I2C SCREEN
 
 // LIBRARIES
 #include <DHT11.h> // library for DHT11 temperature humidity sensors
@@ -7,6 +7,7 @@
 // PINS
 #define DHT11_PIN 9 // digital pin 9
 #define LRD_PIN 7  // digital pin 7
+int lightState; // varibale that stores whether light is on or off
 // button pins
 int dht_bedroom_temp_button = 5; // digital pin 5
 int photoresistor_button = 2; // digital pin 2
@@ -21,10 +22,11 @@ DHT11 DHT(DHT11_PIN); // object for DHT11
 LiquidCrystal_I2C lcd(0x27, 16, 2); // the LCD is 16 units wide, 2 units down
 
 // BOOLEANS
-bool too_cold_bedroom = false; // turns true if the temperature means the room is too hot
-bool too_hot_bedroom = false; // turns true if the tempreature means the room is too cold
+bool too_cold_bedroom = false; // switches true if the temperature means the room is too hot
+bool too_hot_bedroom = false; // switches true if the tempreature means the room is too cold
 bool too_humid_bedroom = false; // switches to true if humidity is above certain threshold
 bool too_dry_bedroom = false; // switches to true if humidity is below certain threshold
+bool light_on = false; // switches to true if light is on
 bool photoresistor_button_pressed = false; // switches to true if the photoresistor button is pressed 
 bool dht_bedroom_temp_button_pressed = false; // switches to true if the dht garage button is pressed 
 bool button_dht_humidity_pressed = false; // switches to true if the dht humidity button is pressed 
@@ -56,7 +58,7 @@ void loop(){
 
   // executes if ALL buttons aren't pressed
   if (photoresistor_button_pressed == false && dht_bedroom_temp_button_pressed == false && button_dht_humidity_pressed == false){ 
-    int lightState = digitalRead(LRD_PIN); // reads if light is on or off
+    lightState = digitalRead(LRD_PIN); // reads if light is on or off
     Serial.println(lightState); // printing in serial monitor
 
     if (lightState == HIGH){ // if there is no light
@@ -77,11 +79,13 @@ void loop(){
 
     if(lightState == LOW){ // if there is light present
       Serial.print("Photoresistor LED on"); // printing in serial monitor
+      light_on = true;
       digitalWrite(photoresistor_led, HIGH); // turning on photoresistor LED
     } else {
       // turning led off
       Serial.print("Photoresistor LED off"); // printing in serial monitor
       digitalWrite(photoresistor_led, LOW); // turning off photoresistor LED
+      light_on = false;
     }
 
     delay(1500); // delay
@@ -123,20 +127,20 @@ void loop(){
         Serial.println(DHT11::getErrorString(result)); // print error message based on the error code in serial monitor
     }
 
-    if(temperature < 12){ // if temperature is too cold
+    if(temperature < 1){ // if temperature is too cold
       digitalWrite(dht_bedroom_temp_led, HIGH); // turning on temperature LED
       too_cold_bedroom = true; // too_cold_bedroom becomes true to alter displayed text
-    } else if(temperature > 24){ // if temperature is too hot
+    } else if(temperature > 30){ // if temperature is too hot
       digitalWrite(dht_bedroom_temp_led, HIGH); // turning on temperature LED
       too_hot_bedroom = true; // too_hot_bedroom becomes true to alter displayed text
     } else { // if temperature is between 12 and 24
       digitalWrite(dht_bedroom_temp_led, LOW); // turning off LED
     } 
 
-    if(humidity < 20){ // if humidity is too dry
+    if(humidity < 3){ // if humidity is too dry
       digitalWrite(dht_bedroom_humidity_led, HIGH); // turning on humidity LED
       too_dry_bedroom = true; // too_dry_bedroom turns true to alter displayed text
-    } else if(humidity > 40){ // if humidity is too humid
+    } else if(humidity > 60){ // if humidity is too humid
       digitalWrite(dht_bedroom_humidity_led, HIGH); // turning on humidity LED
       too_humid_bedroom = true; // too_humid_bedroom turns true to alter displayed text
     } else{ // if humidity is between 20 and 40
@@ -166,16 +170,14 @@ void loop(){
     lcd.clear(); // clearing LCD
 
     if(photoresistor_button_value == 1){ // if photoresistor button is pressed
-      if(lightState == LOW) // if light is detected
-        lcd.clear(); // clearing LCD
-        lcd.setCursor(0, 0); // setting cursor
-        lcd.print("Light left on!"); // displaying
-        delay(500); // delay 
-    } else if(lightState == HIGH){ // if no light is detected, but the button is still pressed
-        lcd.setCursor(0, 0); // setting cursor
-        lcd.print("Nothing of"); // priting text on LCD screen 
+      if(light_on == false){ // if light is off but button is pressed
+        lcd.clear(); // clearing LCD screen
+        lcd.print("Nothing of"); // displaying text on LCD screen 
         lcd.setCursor(0, 1); // setting cursor
         lcd.print("value/concern!"); // displaying text on LCD screen
+      } else { // if light is left on
+        lcd.print("Light left on!"); // displaying text on LCD screen
+      }
     }
 
     if(dht_bedroom_temp_button_value == 1){ // if dht bedroom temperature button is pressed
