@@ -111,28 +111,28 @@ void loop() {
     delay(1000); // delay
 
     if(temperature < 12){ // if garage is too cold
-      digitalWrite(dht_garage_temp_led, HIGH); // turning on dht temperature led
-      too_cold_garage = true; // setting boolean to true to alter warning message
+        digitalWrite(dht_garage_temp_led, HIGH); // turning on dht temperature led
+        too_cold_garage = true; // setting boolean to true to alter warning message
     } else if(temperature > 21){ // if garage is too hot
-      digitalWrite(dht_garage_temp_led, HIGH); // turning on dht temperature led
-      too_hot = true; // setting boolean to true to alter warning message
+        digitalWrite(dht_garage_temp_led, HIGH); // turning on dht temperature led
+        too_hot = true; // setting boolean to true to alter warning message
     } else { // if temperature is normal
-      digitalWrite(dht_garage_temp_led, LOW); // turning off dht temperature LED
+        digitalWrite(dht_garage_temp_led, LOW); // turning off dht temperature LED
     }
     if(irSensorStatus == 1){ // if nothing is detected by infrared sensor
-      digitalWrite(infrared_led, HIGH); // turning on infrared LED 
+        digitalWrite(infrared_led, HIGH); // turning on infrared LED 
       infrared_detected == true; // setting boolean to true
     } else if (irSensorStatus == 0){ // if something is detected by infrared sensor
-      digitalWrite(infrared_led, LOW); // turning off infrared LED
+        digitalWrite(infrared_led, LOW); // turning off infrared LED
     }
     if(humidity < 20){  // if humidity is too dry
-      digitalWrite(dht_garage_humidity_led, HIGH); // turning on dht humidity LED
-      too_dry = true; // setting boolean to true to alter warning message
+        digitalWrite(dht_garage_humidity_led, HIGH); // turning on dht humidity LED
+        too_dry = true; // setting boolean to true to alter warning message
     } else if(humidity > 40){  // if humidity is too humid
-      digitalWrite(dht_garage_humidity_led, HIGH); // turning on dht humidity LED
-      too_humid = true; // setting boolean to true to alter warning message
+        digitalWrite(dht_garage_humidity_led, HIGH); // turning on dht humidity LED
+        too_humid = true; // setting boolean to true to alter warning message
     } else{ // if humidity is normal
-      digitalWrite(dht_garage_humidity_led, LOW); // turning off dht humdity led
+        digitalWrite(dht_garage_humidity_led, LOW); // turning off dht humdity led
     } 
 
     infrared_button_value = digitalRead(infrared_button); // reading if infrared button has been pressed
@@ -173,10 +173,10 @@ void loop() {
         lcd.setCursor(0, 1); // setting cursor on LCD screen
         lcd.print("open!"); // displaying warning message on LCD screen
       } else if(infrared_detected == true){ // if button is pressed but infrared sensor didn't detect anything
-        lcd.setCursor(0, 0); // // setting cursor on LCD screen
-        lcd.print("Nothing of"); // priting text on LCD screen 
-        lcd.setCursor(0, 1); // // setting cursor on LCD screen
-        lcd.print("value/concern!"); // displaying text on LCD screen
+          lcd.setCursor(0, 0); // // setting cursor on LCD screen
+          lcd.print("Nothing of"); // priting text on LCD screen 
+          lcd.setCursor(0, 1); // // setting cursor on LCD screen
+          lcd.print("value/concern!"); // displaying text on LCD screen
       }
     }
 
